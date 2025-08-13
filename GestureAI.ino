@@ -1,6 +1,6 @@
-#define BLYNK_TEMPLATE_ID "TMPL6wHtu5yx1"
-#define BLYNK_TEMPLATE_NAME "Smart Home AI"
-#define BLYNK_AUTH_TOKEN "kRPn_V2dKSMeqL83W1Pb6dOn_L_ha5bG"
+#define BLYNK_TEMPLATE_ID "####"
+#define BLYNK_TEMPLATE_NAME "#######"
+#define BLYNK_AUTH_TOKEN "###########"
 
 #include <ESP32Servo.h>
 #include <Arduino.h>
@@ -24,8 +24,8 @@ float hum=0;
 
 BlynkTimer timer; // Creating a timer object
 
-char ssid[] = "test";
-char pass[] = "bismillah123";
+char ssid[] = "##########";
+char pass[] = "#############";
 
 void processCommand(String command);
 
