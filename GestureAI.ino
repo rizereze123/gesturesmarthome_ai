@@ -37,13 +37,6 @@ bool stringComplete = false;
 
 BlynkTimer timer;
 
-// Status per jari
-bool indexActive  = false;
-bool middleActive = false;
-bool pinkyActive  = false;
-bool thumbActive  = false;
-bool ringActive   = false;
-
 void myTimerEvent();
 void processCommand(String command);
 void rainCheck();
@@ -76,7 +69,6 @@ void setup() {
   digitalWrite(LED_PINKY, LOW);
   digitalWrite(RELAY_RING, LOW);
   digitalWrite(LED_THUMB, LOW);
-  digitalWrite(LED_AC, LOW);
   servo.write(0);
 
   dht.begin();
@@ -84,7 +76,7 @@ void setup() {
   // Timer events
   timer.setInterval(1000L, myTimerEvent);
   timer.setInterval(2000L, rainCheck);
-  timer.setInterval(10000L, checkConnection);
+  timer.setInterval(10000L, checkConnection); // cek koneksi setiap 10 detik
 
   Serial.print("Connecting to WiFi: ");
   Serial.println(ssid);
@@ -135,7 +127,12 @@ void myTimerEvent() {
     Serial.println("%");
 
     Blynk.virtualWrite(V0, temp);
+    Serial.print("Sent to Blynk V0: ");
+    Serial.println(temp);
+
     Blynk.virtualWrite(V1, hum);
+    Serial.print("Sent to Blynk V1: ");
+    Serial.println(hum);
   } else {
     Serial.println("Failed to read from DHT sensor!");
   }
@@ -149,9 +146,11 @@ void rainCheck() {
   if (rainValue < 2000) {
     servo.write(90);
     Blynk.virtualWrite(V2, "Closed by Rain");
+    Serial.println("Servo Closed (Rain detected)");
   } else {
     servo.write(0);
     Blynk.virtualWrite(V2, "Open (Dry)");
+    Serial.println("Servo Open (Dry)");
   }
 }
 
@@ -168,68 +167,64 @@ void checkConnection() {
 
 void processCommand(String command) {
   command.trim();
-  Serial.println("Command: " + command);
 
-  // Update status jari
-  if (command == "index_on")  indexActive = true;
-  if (command == "index_off") indexActive = false;
-
-  if (command == "middle_on")  middleActive = true;
-  if (command == "middle_off") middleActive = false;
-
-  if (command == "pinky_on")  pinkyActive = true;
-  if (command == "pinky_off") pinkyActive = false;
-
-  if (command == "thumb_on")  thumbActive = true;
-  if (command == "thumb_off") thumbActive = false;
-
-  if (command == "ring_on")  ringActive = true;
-  if (command == "ring_off") ringActive = false;
-
-  // === Logika ON/OFF berdasarkan kombinasi ===
-
-  // 1. Peace sign (Index + Middle) → Servo
-  if (indexActive && middleActive) {
+  if (command == "index_on") {
     servo.write(90);
     Blynk.virtualWrite(V2, "ON");
-  } else {
+    Serial.println("Command: index_on");
+  }
+  else if (command == "index_off") {
     servo.write(0);
     Blynk.virtualWrite(V2, "OFF");
+    Serial.println("Command: index_off");
   }
-
-  // 2. Metal sign (Index + Pinky) → Relay + LED_AC
-  if (indexActive && pinkyActive) {
+  else if (command == "ring_on") {
     digitalWrite(RELAY_RING, HIGH);
     digitalWrite(LED_AC, HIGH);
     Blynk.virtualWrite(V3, "ON");
-  } else {
+    Serial.println("Command: ring_on");
+  }
+  else if (command == "ring_off") {
     digitalWrite(RELAY_RING, LOW);
     digitalWrite(LED_AC, LOW);
     Blynk.virtualWrite(V3, "OFF");
+    Serial.println("Command: ring_off");
   }
-
-  // 3. Index + Thumb → LED_PINKY
-  if (indexActive && thumbActive) {
+  else if (command == "pinky_on") {
     digitalWrite(LED_PINKY, HIGH);
     Blynk.virtualWrite(V4, "ON");
-  } else {
+    Serial.println("Command: pinky_on");
+  }
+  else if (command == "pinky_off") {
     digitalWrite(LED_PINKY, LOW);
     Blynk.virtualWrite(V4, "OFF");
+    Serial.println("Command: pinky_off");
   }
-
-  // 4. Ring finger → LED_THUMB
-  if (ringActive) {
+  else if (command == "thumb_on") {
     digitalWrite(LED_THUMB, HIGH);
+    dfplayer.play(1);
     Blynk.virtualWrite(V5, "ON");
-  } else {
-    digitalWrite(LED_THUMB, LOW);
-    Blynk.virtualWrite(V5, "OFF");
+    Serial.println("Command: thumb_on");
   }
-
-  // Debug status
-  Serial.print("Index: "); Serial.print(indexActive);
-  Serial.print(" | Middle: "); Serial.print(middleActive);
-  Serial.print(" | Pinky: "); Serial.print(pinkyActive);
-  Serial.print(" | Thumb: "); Serial.print(thumbActive);
-  Serial.print(" | Ring: "); Serial.println(ringActive);
+  else if (command == "thumb_off") {
+    digitalWrite(LED_THUMB, LOW);
+    dfplayer.stop();
+    Blynk.virtualWrite(V5, "OFF");
+    Serial.println("Command: thumb_off");
+  }
+  else if (command == "all_off") {
+    digitalWrite(LED_PINKY, LOW);
+    digitalWrite(RELAY_RING, LOW);
+    digitalWrite(LED_THUMB, LOW);
+    servo.write(0);
+    dfplayer.stop();
+    Blynk.virtualWrite(V2, "OFF");
+    Blynk.virtualWrite(V3, "OFF");
+    Blynk.virtualWrite(V4, "OFF");
+    Blynk.virtualWrite(V5, "OFF");
+    Serial.println("Command: all_off");
+  }
+  else {
+    Serial.println("Unknown command: " + command);
+  }
 }
